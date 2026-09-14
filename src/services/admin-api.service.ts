@@ -595,6 +595,87 @@ export async function createServicio(
   return data;
 }
 
+export type CatalogoImportErrorRow = {
+  row: number;
+  tipo: string;
+  nombre: string;
+  codigo: string;
+  categoria: string;
+  precio: string;
+  descripcion: string;
+  activo: string;
+  error: string;
+};
+
+export type CatalogoImportResult = {
+  created: number;
+  failed: number;
+  skippedEmpty: number;
+  errors: CatalogoImportErrorRow[];
+  reporteBase64?: string;
+};
+
+function triggerXlsxDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export async function downloadCatalogoImportPlantilla(): Promise<void> {
+  const { data, headers } = await httpClient.get<Blob>(
+    '/servicios/import/plantilla',
+    { responseType: 'blob' },
+  );
+  const contentType = String(headers['content-type'] ?? data.type ?? '');
+  if (contentType.includes('application/json')) {
+    const text = await data.text();
+    let message = 'No se pudo descargar la plantilla';
+    try {
+      const parsed = JSON.parse(text) as { message?: string | string[] };
+      const raw = parsed.message;
+      message = Array.isArray(raw) ? raw.join('. ') : raw || message;
+    } catch {
+      /* keep fallback */
+    }
+    throw new Error(message);
+  }
+  triggerXlsxDownload(data, 'plantilla-catalogo.xlsx');
+}
+
+export async function importCatalogo(
+  file: File,
+): Promise<CatalogoImportResult> {
+  const form = new FormData();
+  form.append('file', file);
+  const { data } = await httpClient.post<CatalogoImportResult>(
+    '/servicios/import',
+    form,
+  );
+  return data;
+}
+
+export function downloadCatalogoImportReporte(base64: string): void {
+  let binary: string;
+  try {
+    binary = atob(base64);
+  } catch {
+    throw new Error('No se pudo generar el reporte');
+  }
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  triggerXlsxDownload(
+    new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }),
+    'reporte-carga-catalogo.xlsx',
+  );
+}
+
 export interface CreateServicioMultiPayload extends CreateServicioPayload {
   tenantIds: string[];
 }

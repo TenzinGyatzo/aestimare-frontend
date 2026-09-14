@@ -13,6 +13,13 @@
         >
           Gestionar categorías
         </router-link>
+        <button
+          type="button"
+          class="w-full sm:w-auto text-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors font-medium text-sm"
+          @click="mostrarModalCargaMasiva = true"
+        >
+          Carga masiva
+        </button>
         <div class="flex w-full sm:w-auto gap-2">
           <button
             type="button"
@@ -634,6 +641,12 @@
       @saved="onItemGuardado"
     />
 
+    <ModalCargaMasivaCatalogo
+      :show="mostrarModalCargaMasiva"
+      @close="mostrarModalCargaMasiva = false"
+      @imported="onCargaMasivaImported"
+    />
+
     <!-- Modal de confirmación para desactivar servicio -->
     <ConfirmationModal
       :show="mostrarConfirmDesactivar"
@@ -668,6 +681,7 @@ import type {
 } from '../../types/backend';
 import ConfirmationModal from '../../components/common/ConfirmationModal.vue';
 import ModalItemCatalogoForm from '../../components/common/ModalItemCatalogoForm.vue';
+import ModalCargaMasivaCatalogo from '../../components/common/ModalCargaMasivaCatalogo.vue';
 import ToggleSwitch from '../../components/common/ToggleSwitch.vue';
 import ListLoadingOverlay from '../../components/base/ListLoadingOverlay.vue';
 import { useAuthStore } from '../../store/auth';
@@ -809,6 +823,17 @@ function onCerrarModalItem() {
 function onItemGuardado(_item: Servicio, message: string) {
   successMsg.value = message;
   onCerrarModalItem();
+  void cargarServicios();
+}
+
+const mostrarModalCargaMasiva = ref(false);
+
+function onCargaMasivaImported(created: number) {
+  if (!mostrarModalCargaMasiva.value) return;
+  successMsg.value =
+    created === 1
+      ? 'Se registró 1 ítem desde la carga masiva.'
+      : `Se registraron ${created} ítems desde la carga masiva.`;
   void cargarServicios();
 }
 
@@ -1092,6 +1117,7 @@ watch(activeTenantId, () => {
   hasLoadedOnce.value = false;
   categorias.value = [];
   if (mostrarModalItem.value) onCerrarModalItem();
+  mostrarModalCargaMasiva.value = false;
   mostrarConfirmDesactivar.value = false;
   servicioADesactivar.value = null;
   successMsg.value = null;
