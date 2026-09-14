@@ -559,12 +559,10 @@ const fechaHasta = ref<string>('');
 /** '' = todos (omitir query); Story 7.2 SaaS. */
 const filtroTipo = ref<'' | 'producto' | 'servicio'>('');
 
-/** Denominador de conversión: emitidas menos canceladas (alineado al BE). */
-const ofertasValidasConversion = computed(() => {
-  const emitidas = metricasTotales.value?.cotizacionesEmitidas ?? 0;
-  const canceladas = metricasTotales.value?.cotizacionesCanceladas ?? 0;
-  return Math.max(0, emitidas - canceladas);
-});
+/** Denominador de conversión: emitidas (el BE ya excluye canceladas). */
+const ofertasValidasConversion = computed(
+  () => metricasTotales.value?.cotizacionesEmitidas ?? 0,
+);
 
 const emptyBucket = () => ({ ingresosTotales: 0, vecesContratado: 0 });
 

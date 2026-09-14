@@ -381,13 +381,13 @@ export interface TotalsMetricDto {
   cotizacionesMes: number;
   cotizacionesAnio: number;
   cotizacionesTotales: number;
-  /** Story 7.1 / FR-43 — emitidas = match del periodo (= cotizacionesTotales). */
+  /** Emitidas = match del periodo sin canceladas (= cotizacionesTotales). */
   cotizacionesEmitidas: number;
   cotizacionesAceptadas: number;
   cotizacionesRechazadas: number;
-  /** Excluidas del denominador de tasaConversion. */
+  /** Count dedicado; no entra en emitidas ni en tasaConversion. */
   cotizacionesCanceladas?: number;
-  /** aceptadas / (emitidas − canceladas) */
+  /** aceptadas / emitidas (emitidas ya excluye canceladas) */
   tasaConversion: number;
   ingresosTotales: number;
   /** FR63 / AD-22 — desglose por línea; opcional en clients viejos. */
