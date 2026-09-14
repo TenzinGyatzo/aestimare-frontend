@@ -2,6 +2,7 @@
   <div
     v-if="isOpen"
     class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4 animate-in fade-in duration-300"
+    :inert="altaAbierta"
     @pointerdown="onBackdropPointerDown"
     @pointerup="onBackdropPointerUp"
     @pointercancel="onBackdropPointerCancel"
@@ -11,7 +12,7 @@
       @click.stop
     >
       <div
-        class="px-4 sm:px-6 py-3 sm:py-5 border-b border-gray-100 flex justify-between items-center bg-white"
+        class="px-4 sm:px-6 py-3 sm:py-5 border-b border-gray-100 flex flex-wrap justify-between items-center gap-2 bg-white"
       >
         <div>
           <h3 class="text-lg sm:text-xl font-bold text-gray-900">
@@ -21,6 +22,21 @@
             Selecciona ítems y ajusta la cantidad de cada uno
           </p>
         </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded-md border border-sky-300 bg-sky-50 text-sky-800 hover:bg-sky-100 transition-colors font-medium text-sm"
+            @click="abrirAlta('servicio')"
+          >
+            + Servicio
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 rounded-md border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 transition-colors font-medium text-sm"
+            @click="abrirAlta('producto')"
+          >
+            + Producto
+          </button>
         <button
           type="button"
           @click="cerrar"
@@ -41,6 +57,7 @@
             />
           </svg>
         </button>
+        </div>
       </div>
 
       <div
@@ -230,6 +247,7 @@
           <label
             v-for="servicio in catalogo"
             :key="servicio._id"
+            :data-catalogo-id="servicio._id"
             class="group flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 border border-gray-100 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 hover:border-medical-blue-200 hover:shadow-md transition-all duration-300 cursor-pointer"
             :class="{
               'border-medical-blue-300 bg-medical-blue-50/40': isSelected(
@@ -339,13 +357,28 @@
       </div>
     </div>
   </div>
+
+  <ModalItemCatalogoForm
+    :show="altaAbierta"
+    :create-tipo="altaTipo"
+    :allow-multi-tenant="false"
+    overlay-class="z-[60]"
+    :show-category-admin-link="false"
+    @close="altaAbierta = false"
+    @saved="onItemCreado"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { useModalDismiss } from '../../composables/useModalDismiss';
 import QuantitySelector from './QuantitySelector.vue';
-import type { CategoriaServicioCatalogo, Servicio } from '../../types/backend';
+import ModalItemCatalogoForm from './ModalItemCatalogoForm.vue';
+import type {
+  CategoriaServicioCatalogo,
+  Servicio,
+  TipoItemCatalogo,
+} from '../../types/backend';
 import {
   getCategoriasServicio,
   getServicios,
@@ -387,6 +420,8 @@ const loadingCategorias = ref(false);
 const serviciosVistos = ref<Map<string, Servicio>>(new Map());
 const categorias = ref<CategoriaServicioCatalogo[]>([]);
 const categoriasCargadas = ref(false);
+const altaAbierta = ref(false);
+const altaTipo = ref<TipoItemCatalogo>('servicio');
 
 const categoriaById = computed(() => {
   const map = new Map<string, CategoriaServicioCatalogo>();
@@ -483,9 +518,12 @@ watch(
       ordenActivo.value = 'creacion';
       categoriaIdFiltro.value = '';
       tipoFiltro.value = '';
+      altaAbierta.value = false;
       // Re-cargar mapa de badges/tabs (retry tras error + refresh tras cambios Admin)
       void ensureCategorias(true);
       void fetchCatalogo();
+    } else {
+      altaAbierta.value = false;
     }
   },
 );
@@ -577,6 +615,7 @@ const setCantidad = (id: string, cantidad: number) => {
 };
 
 const aplicarSeleccion = (continuar: boolean) => {
+  if (altaAbierta.value) return;
   const serviciosParaAgregar: Record<string, number> = {
     ...cantidadesModal.value,
   };
@@ -600,10 +639,54 @@ const aplicarSeleccion = (continuar: boolean) => {
 };
 
 const cerrar = () => {
+  if (altaAbierta.value) return;
   busqueda.value = '';
   emit('close');
 };
 
+function abrirAlta(tipo: TipoItemCatalogo) {
+  if (altaAbierta.value) return;
+  altaTipo.value = tipo;
+  altaAbierta.value = true;
+}
+
+function itemEstaActivo(item: Servicio): boolean {
+  return item.activo !== false;
+}
+
+async function onItemCreado(item: Servicio) {
+  altaAbierta.value = false;
+  if (!itemEstaActivo(item) || !item._id) {
+    void fetchCatalogo();
+    return;
+  }
+  busqueda.value = '';
+  if (tipoFiltro.value && tipoFiltro.value !== item.tipo) {
+    tipoFiltro.value =
+      item.tipo === 'producto' || item.tipo === 'servicio' ? item.tipo : '';
+  }
+  if (categoriaIdFiltro.value && categoriaIdFiltro.value !== item.categoriaId) {
+    categoriaIdFiltro.value = item.categoriaId || '';
+  }
+  await fetchCatalogo();
+  if (!catalogo.value.some((s) => s._id === item._id)) {
+    tipoFiltro.value =
+      item.tipo === 'producto' || item.tipo === 'servicio' ? item.tipo : '';
+    categoriaIdFiltro.value = item.categoriaId || '';
+    await fetchCatalogo();
+  }
+  if (!catalogo.value.some((s) => s._id === item._id)) {
+    catalogo.value = [item, ...catalogo.value];
+  }
+  serviciosVistos.value.set(item._id, item);
+  setCantidad(item._id, 1);
+  await nextTick();
+  const row = document.querySelector(
+    `[data-catalogo-id="${item._id}"]`,
+  ) as HTMLElement | null;
+  row?.scrollIntoView({ block: 'nearest' });
+}
+
 const { onBackdropPointerDown, onBackdropPointerUp, onBackdropPointerCancel } =
-  useModalDismiss(cerrar, () => props.isOpen);
+  useModalDismiss(cerrar, () => props.isOpen && !altaAbierta.value);
 </script>
