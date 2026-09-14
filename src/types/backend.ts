@@ -160,6 +160,9 @@ export interface Cliente {
   razonSocial?: string;
   rfc?: string;
   activo?: boolean;
+  /** Contactos activos del cliente (listado CRM). */
+  totalContactos?: number;
+  /** Cotizaciones del cliente excluyendo canceladas (listado CRM). */
   totalCotizaciones?: number;
 }
 

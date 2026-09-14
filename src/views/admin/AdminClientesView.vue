@@ -159,6 +159,11 @@
               <div
                 class="mt-2 sm:mt-3 text-xs sm:text-sm text-gray-600"
               >
+                <span class="font-medium">Contactos:</span>
+                <span class="ml-1 font-semibold text-gray-900">{{
+                  grupo.totalContactos || 0
+                }}</span>
+                <span class="mx-2 text-gray-400">·</span>
                 <span class="font-medium">Cotizaciones:</span>
                 <span class="ml-1 font-semibold text-gray-900">{{
                   grupo.totalCotizaciones || 0
@@ -480,6 +485,7 @@ const clientesAgrupados = computed(() => {
       razonSocial?: string;
       rfc?: string;
       activo?: boolean;
+      totalContactos?: number;
       totalCotizaciones?: number;
     }
   >();
@@ -493,6 +499,7 @@ const clientesAgrupados = computed(() => {
         razonSocial: cliente.razonSocial,
         rfc: cliente.rfc,
         activo: cliente.activo,
+        totalContactos: cliente.totalContactos,
         totalCotizaciones: cliente.totalCotizaciones,
       });
     }
