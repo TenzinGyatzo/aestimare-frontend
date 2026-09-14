@@ -350,7 +350,9 @@ function onDrop(event: DragEvent) {
     archivo.value = null;
     return;
   }
-  setArchivo(files[0]);
+  const dropped = files.item(0);
+  if (!dropped) return;
+  setArchivo(dropped);
 }
 
 async function descargarPlantilla() {
