@@ -1,5 +1,5 @@
 /** Timeout de inactividad de sesión. Única fuente de verdad. */
-export const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+export const IDLE_TIMEOUT_MS = 120 * 60 * 1000;
 
 /** Mínimo entre escrituras de lastActivity ante eventos de alta frecuencia. */
 export const IDLE_ACTIVITY_THROTTLE_MS = 1000;
