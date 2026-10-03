@@ -72,6 +72,8 @@ export interface TenantConfigResponse {
   defaultIncluirImagenesPdf?: boolean | null;
   /** Preferencia «usar vigencia» al crear; ausente/null ≠ false. */
   defaultUsarVigencia?: boolean | null;
+  /** Preferencia «Agregar IVA» al crear; ausente/null ≠ false. */
+  defaultAgregarIva?: boolean | null;
   /** IANA TZ del tenant (Story 9.1 / AD-30). */
   zonaHoraria?: string;
   createdAt?: string;

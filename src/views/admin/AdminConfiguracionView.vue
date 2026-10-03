@@ -395,7 +395,7 @@
           <p class="text-sm text-green-800">{{ vigenciaFormSuccess }}</p>
         </div>
 
-        <!-- Orden canónico: Desc | Img / Vigencia | Bancarios -->
+        <!-- Desc | Img / Bancarios | IVA / Vigencia -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
           <label
             class="flex items-start gap-3 rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50"
@@ -441,6 +441,45 @@
             class="flex items-start gap-3 rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50"
           >
             <input
+              v-model="vbForm.defaultIncluirDatosBancarios"
+              type="checkbox"
+              class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              :disabled="isBusy"
+              @change="onVigenciaFormEdited"
+            />
+            <span>
+              <span class="block text-sm font-medium text-gray-800"
+                >Incluir datos bancarios</span
+              >
+              <span class="block text-xs text-gray-500 mt-0.5"
+                >Incluye los datos bancarios configurados en el PDF.</span
+              >
+            </span>
+          </label>
+          <label
+            class="flex items-start gap-3 rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50"
+          >
+            <input
+              v-model="vbForm.defaultAgregarIva"
+              type="checkbox"
+              class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              :disabled="isBusy"
+              @change="onVigenciaFormEdited"
+            />
+            <span>
+              <span class="block text-sm font-medium text-gray-800"
+                >Agregar IVA</span
+              >
+              <span class="block text-xs text-gray-500 mt-0.5"
+                >Desglosa el IVA al 16 % en las cotizaciones nuevas. Se puede
+                cambiar en cada cotización.</span
+              >
+            </span>
+          </label>
+          <label
+            class="flex items-start gap-3 rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50"
+          >
+            <input
               v-model="vbForm.defaultUsarVigencia"
               type="checkbox"
               class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -454,25 +493,6 @@
               <span class="block text-xs text-gray-500 mt-0.5"
                 >Las cotizaciones nuevas inician con vigencia en días (se puede
                 desactivar por cotización).</span
-              >
-            </span>
-          </label>
-          <label
-            class="flex items-start gap-3 rounded-lg border border-gray-200 p-3 cursor-pointer hover:bg-gray-50"
-          >
-            <input
-              v-model="vbForm.defaultIncluirDatosBancarios"
-              type="checkbox"
-              class="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              :disabled="isBusy"
-              @change="onVigenciaFormEdited"
-            />
-            <span>
-              <span class="block text-sm font-medium text-gray-800"
-                >Incluir datos bancarios</span
-              >
-              <span class="block text-xs text-gray-500 mt-0.5"
-                >Incluye los datos bancarios configurados en el PDF.</span
               >
             </span>
           </label>
@@ -764,6 +784,7 @@ const vbForm = reactive({
   defaultIncluirDescripciones: true,
   defaultIncluirImagenesPdf: true,
   defaultUsarVigencia: true,
+  defaultAgregarIva: true,
   titular: '',
   banco: '',
   cuenta: '',
@@ -923,6 +944,8 @@ function applyVigenciaFromConfig(cfg: TenantConfigResponse) {
     typeof cfg.defaultUsarVigencia === 'boolean'
       ? cfg.defaultUsarVigencia
       : true;
+  vbForm.defaultAgregarIva =
+    typeof cfg.defaultAgregarIva === 'boolean' ? cfg.defaultAgregarIva : true;
 }
 
 function applyBancariosFromConfig(cfg: TenantConfigResponse) {
@@ -1254,6 +1277,7 @@ async function onSaveVigencia() {
       defaultIncluirDescripciones: vbForm.defaultIncluirDescripciones,
       defaultIncluirImagenesPdf: vbForm.defaultIncluirImagenesPdf,
       defaultUsarVigencia: vbForm.defaultUsarVigencia,
+      defaultAgregarIva: vbForm.defaultAgregarIva,
     };
     if (Number.isInteger(days) && days >= 1 && days <= 365) {
       payload.vigenciaDefaultDias = days;

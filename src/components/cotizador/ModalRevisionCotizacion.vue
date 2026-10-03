@@ -189,7 +189,7 @@
                 <span v-else class="text-gray-600">Ninguna</span>
               </dd>
             </div>
-            <!-- Orden canónico: Desc | Img / Vigencia | Bancarios -->
+            <!-- Desc | Img / Bancarios | IVA / Vigencia -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <dt class="text-gray-500">Descripciones en PDF</dt>
@@ -204,6 +204,18 @@
                 </dd>
               </div>
               <div>
+                <dt class="text-gray-500">Datos bancarios en PDF</dt>
+                <dd class="font-medium text-gray-900">
+                  {{ incluirDatosBancarios ? 'Sí' : 'No' }}
+                </dd>
+              </div>
+              <div>
+                <dt class="text-gray-500">Agregar IVA</dt>
+                <dd class="font-medium text-gray-900">
+                  {{ agregarIva ? 'Sí' : 'No' }}
+                </dd>
+              </div>
+              <div>
                 <dt class="text-gray-500">Vigencia</dt>
                 <dd class="font-medium text-gray-900">
                   {{
@@ -211,12 +223,6 @@
                       ? 'Sin vigencia'
                       : `${vigenciaDias} días (${vigenciaLabel})`
                   }}
-                </dd>
-              </div>
-              <div>
-                <dt class="text-gray-500">Datos bancarios en PDF</dt>
-                <dd class="font-medium text-gray-900">
-                  {{ incluirDatosBancarios ? 'Sí' : 'No' }}
                 </dd>
               </div>
             </div>

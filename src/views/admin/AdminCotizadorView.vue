@@ -513,10 +513,10 @@
           </div>
         </div>
 
-        <!-- Opciones: Descripciones | Imágenes / Vigencia | Bancarios -->
+        <!-- Desc | Img / Bancarios | IVA / Vigencia -->
         <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div
-            class="p-4 rounded-2xl border"
+            class="order-1 p-4 rounded-2xl border"
             :class="
               descripcionesDisponibles
                 ? 'bg-medical-blue-50/50 border-medical-blue-100 cursor-pointer'
@@ -593,7 +593,7 @@
           </div>
 
           <div
-            class="p-4 rounded-2xl border"
+            class="order-2 p-4 rounded-2xl border"
             :class="
               imagenesDisponibles
                 ? 'bg-medical-blue-50/50 border-medical-blue-100 cursor-pointer'
@@ -668,7 +668,7 @@
           </div>
 
           <div
-            class="p-4 rounded-2xl border bg-medical-blue-50/50 border-medical-blue-100 cursor-pointer"
+            class="order-5 p-4 rounded-2xl border bg-medical-blue-50/50 border-medical-blue-100 cursor-pointer"
             role="group"
             @click="setUsarVigencia(!usarVigencia)"
           >
@@ -705,7 +705,7 @@
           </div>
 
           <div
-            class="p-4 rounded-2xl border"
+            class="order-3 p-4 rounded-2xl border"
             :class="
               bancariosUtiles
                 ? 'bg-medical-blue-50/50 border-medical-blue-100 cursor-pointer'
@@ -784,7 +784,7 @@
           </div>
 
           <div
-            class="p-4 rounded-2xl border bg-medical-blue-50/50 border-medical-blue-100 cursor-pointer"
+            class="order-4 p-4 rounded-2xl border bg-medical-blue-50/50 border-medical-blue-100 cursor-pointer"
             role="group"
             @click="setAgregarIva(!agregarIva)"
           >
@@ -1313,7 +1313,7 @@ const isResendingEmail = ref(false);
 /** Bases (selected/preferidas). No pisar con availability. */
 const incluirDatosBancarios = ref(true);
 const mostrarDescripciones = ref(true);
-/** Desglose IVA 16 %. Inicia encendido; no sigue un default de tenant. */
+/** Desglose IVA 16 %. Inicia con el default del tenant (ausente → encendido). */
 const agregarIva = ref(true);
 /** Story 6.5 — bancarios útiles en tenant config (availability). */
 const bancariosUtiles = ref(false);
@@ -1322,6 +1322,9 @@ let tenantDefaultIncluirDatosBancarios = true;
 let tenantDefaultIncluirDescripciones = true;
 let tenantDefaultIncluirImagenesPdf = true;
 let tenantDefaultUsarVigencia = true;
+let tenantDefaultAgregarIva = true;
+/** El usuario ya eligió IVA; un refresh de config no lo pisa. */
+let agregarIvaTouched = false;
 const plantillasDisponibles = ref<Plantilla[]>([]);
 const isLoadingPlantillas = ref(false);
 const errorPlantillas = ref('');
@@ -1689,6 +1692,7 @@ function applyTenantVisualizacionDefaults(cfg: {
   defaultIncluirDescripciones?: boolean | null;
   defaultIncluirImagenesPdf?: boolean | null;
   defaultUsarVigencia?: boolean | null;
+  defaultAgregarIva?: boolean | null;
 }) {
   tenantDefaultIncluirDatosBancarios =
     typeof cfg.defaultIncluirDatosBancarios === 'boolean'
@@ -1706,6 +1710,11 @@ function applyTenantVisualizacionDefaults(cfg: {
     typeof cfg.defaultUsarVigencia === 'boolean'
       ? cfg.defaultUsarVigencia
       : true;
+  tenantDefaultAgregarIva =
+    typeof cfg.defaultAgregarIva === 'boolean' ? cfg.defaultAgregarIva : true;
+  if (!agregarIvaTouched) {
+    agregarIva.value = tenantDefaultAgregarIva;
+  }
   if (visualizacionBasesTouched) return;
   incluirDatosBancarios.value = tenantDefaultIncluirDatosBancarios;
   mostrarDescripciones.value = tenantDefaultIncluirDescripciones;
@@ -2098,6 +2107,7 @@ function setIncluirImagenesPdf(value: boolean) {
 }
 
 function setAgregarIva(value: boolean) {
+  agregarIvaTouched = true;
   agregarIva.value = value;
 }
 
@@ -2880,10 +2890,11 @@ const cerrarModal = () => {
   isSendingEmail.value = false;
   isResendingEmail.value = false;
   visualizacionBasesTouched = false;
+  agregarIvaTouched = false;
   incluirDatosBancarios.value = tenantDefaultIncluirDatosBancarios;
   mostrarDescripciones.value = tenantDefaultIncluirDescripciones;
   incluirImagenesPdf.value = tenantDefaultIncluirImagenesPdf;
-  agregarIva.value = true;
+  agregarIva.value = tenantDefaultAgregarIva;
   plantillasSeleccionadasIds.value = [];
   plantillaSnapshots.value = {};
   showPersonalizarModal.value = false;
