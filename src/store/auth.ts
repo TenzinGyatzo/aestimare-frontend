@@ -11,6 +11,7 @@ import type {
 } from '../types/backend';
 import {
   IDLE_TIMEOUT_MS,
+  SESSION_LOCK_MIN_REMAINING_MS,
   STORAGE_KEY_LAST_ACTIVITY,
   STORAGE_KEY_SESSION_LOCKED,
 } from '../constants/session';
@@ -21,7 +22,7 @@ import {
   acceptConfidentiality,
   getConfidentialityStatus,
 } from '../services/confidentiality-api.service';
-import { resolveRestoredLock } from '../utils/session-idle';
+import { decideSessionResume } from '../utils/session-idle';
 
 interface AuthState {
   accessToken: string | null;
@@ -43,7 +44,7 @@ interface AuthState {
   lastActivityAt: number | null;
 }
 
-const STORAGE_KEY_TOKEN = 'auth_token';
+export const STORAGE_KEY_TOKEN = 'auth_token';
 const STORAGE_KEY_USER = 'auth_user';
 const STORAGE_KEY_TENANT = 'auth_active_tenant_id';
 
@@ -285,8 +286,12 @@ export const useAuthStore = defineStore('auth', {
           this.setActiveTenantId(null);
         }
 
-        this.restoreIdleState();
-        if (this.sessionLocked) {
+        const resume = this.restoreIdleState();
+        if (resume === 'login') {
+          this.logout();
+          return;
+        }
+        if (resume === 'lock') {
           return;
         }
 
@@ -387,19 +392,32 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem(STORAGE_KEY_SESSION_LOCKED);
     },
 
-    restoreIdleState(): void {
+    restoreIdleState(): 'continue' | 'lock' | 'login' {
       const rawTs = localStorage.getItem(STORAGE_KEY_LAST_ACTIVITY);
       const lockedFlag = localStorage.getItem(STORAGE_KEY_SESSION_LOCKED) === '1';
       const last = rawTs != null && rawTs !== '' ? Number(rawTs) : NaN;
-      const restored = resolveRestoredLock(
-        Number.isFinite(last) ? last : null,
+      const lastActivityAt = Number.isFinite(last) ? last : null;
+      const decision = decideSessionResume(
+        lastActivityAt,
         lockedFlag,
         Date.now(),
         IDLE_TIMEOUT_MS,
+        this.accessToken,
+        SESSION_LOCK_MIN_REMAINING_MS,
       );
-      this.lastActivityAt = restored.lastActivityAt;
-      this.sessionLocked = restored.sessionLocked;
+      if (decision === 'login') {
+        return 'login';
+      }
+      if (decision === 'lock') {
+        this.lastActivityAt = lastActivityAt ?? Date.now();
+        this.sessionLocked = true;
+        this.persistIdleState();
+        return 'lock';
+      }
+      this.sessionLocked = false;
+      this.lastActivityAt = lastActivityAt ?? Date.now();
       this.persistIdleState();
+      return 'continue';
     },
 
     async hydrateAfterUnlock(): Promise<void> {

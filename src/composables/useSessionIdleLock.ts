@@ -3,11 +3,18 @@ import { useRoute, useRouter } from 'vue-router';
 import {
   IDLE_ACTIVITY_THROTTLE_MS,
   IDLE_TIMEOUT_MS,
+  SESSION_LOCK_MIN_REMAINING_MS,
   STORAGE_KEY_LAST_ACTIVITY,
   STORAGE_KEY_SESSION_LOCKED,
 } from '../constants/session';
-import { useAuthStore } from '../store/auth';
-import { createThrottled, remainingMs, shouldLock } from '../utils/session-idle';
+import { STORAGE_KEY_TOKEN, useAuthStore } from '../store/auth';
+import {
+  createThrottled,
+  decideSessionResume,
+  readJwtExpMs,
+  remainingMs,
+  type SessionResumeDecision,
+} from '../utils/session-idle';
 
 export function useSessionIdleLock(): void {
   const authStore = useAuthStore();
@@ -15,6 +22,7 @@ export function useSessionIdleLock(): void {
   const router = useRouter();
 
   let timer: ReturnType<typeof setTimeout> | null = null;
+  let marginTimer: ReturnType<typeof setTimeout> | null = null;
 
   const isProtectedRoute = computed(() =>
     route.matched.some((record) => record.meta?.requiresAuth),
@@ -34,17 +42,68 @@ export function useSessionIdleLock(): void {
     }
   }
 
+  function clearMarginTimer(): void {
+    if (marginTimer != null) {
+      clearTimeout(marginTimer);
+      marginTimer = null;
+    }
+  }
+
+  function currentDecision(now = Date.now()): SessionResumeDecision {
+    return decideSessionResume(
+      authStore.lastActivityAt,
+      authStore.sessionLocked,
+      now,
+      IDLE_TIMEOUT_MS,
+      authStore.accessToken,
+      SESSION_LOCK_MIN_REMAINING_MS,
+    );
+  }
+
+  function redirectToLogin(): void {
+    if (route.name === 'admin-login') return;
+    void router.push({ name: 'admin-login' });
+  }
+
+  function endAbsoluteSession(): void {
+    clearTimer();
+    clearMarginTimer();
+    if (!authStore.isAuthenticated) return;
+    authStore.logout();
+    redirectToLogin();
+  }
+
+  /** Solo con overlay: cuando el restante llega al margen, reevaluar hacia login. */
+  function scheduleMarginUntilLogin(): void {
+    clearMarginTimer();
+    if (!authStore.sessionLocked) return;
+    const expMs = readJwtExpMs(authStore.accessToken);
+    if (expMs == null) return;
+    const wait = expMs - Date.now() - SESSION_LOCK_MIN_REMAINING_MS;
+    marginTimer = setTimeout(() => {
+      marginTimer = null;
+      evaluate();
+    }, Math.max(0, wait));
+  }
+
   function evaluate(): void {
     if (!authStore.isAuthenticated || !isProtectedRoute.value) {
       clearTimer();
+      clearMarginTimer();
       return;
     }
-    const last = authStore.lastActivityAt ?? 0;
-    if (shouldLock(last, Date.now(), IDLE_TIMEOUT_MS)) {
+    const decision = currentDecision();
+    if (decision === 'login') {
+      endAbsoluteSession();
+      return;
+    }
+    if (decision === 'lock') {
       authStore.lockSession();
       clearTimer();
+      scheduleMarginUntilLogin();
       return;
     }
+    clearMarginTimer();
     schedule();
   }
 
@@ -65,12 +124,18 @@ export function useSessionIdleLock(): void {
     if (authStore.sessionLocked) {
       return;
     }
-    const last = authStore.lastActivityAt ?? 0;
-    if (shouldLock(last, Date.now(), IDLE_TIMEOUT_MS)) {
-      authStore.lockSession();
-      clearTimer();
+    const decision = currentDecision();
+    if (decision === 'login') {
+      endAbsoluteSession();
       return;
     }
+    if (decision === 'lock') {
+      authStore.lockSession();
+      clearTimer();
+      scheduleMarginUntilLogin();
+      return;
+    }
+    clearMarginTimer();
     authStore.touchActivity(Date.now());
     schedule();
   }, IDLE_ACTIVITY_THROTTLE_MS);
@@ -82,6 +147,10 @@ export function useSessionIdleLock(): void {
   }
 
   function onStorage(event: StorageEvent): void {
+    if (event.key === STORAGE_KEY_TOKEN && event.newValue == null) {
+      endAbsoluteSession();
+      return;
+    }
     if (event.key === STORAGE_KEY_LAST_ACTIVITY && event.newValue) {
       const ts = Number(event.newValue);
       if (Number.isFinite(ts)) {
@@ -97,8 +166,9 @@ export function useSessionIdleLock(): void {
       }
       authStore.syncLockedFromStorage(event.newValue === '1');
       if (authStore.sessionLocked) {
-        clearTimer();
+        evaluate();
       } else {
+        clearMarginTimer();
         void authStore.hydrateAfterUnlock();
         schedule();
       }
@@ -132,6 +202,7 @@ export function useSessionIdleLock(): void {
   onUnmounted(() => {
     stopAfterEach();
     clearTimer();
+    clearMarginTimer();
     window.removeEventListener('pointerdown', recordActivity, true);
     window.removeEventListener('keydown', recordActivity, true);
     window.removeEventListener('touchstart', recordActivity, true);

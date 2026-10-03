@@ -1,6 +1,9 @@
 /** Timeout de inactividad de sesión. Única fuente de verdad. */
 export const IDLE_TIMEOUT_MS = 120 * 60 * 1000;
 
+/** Margen mínimo de vida del JWT para mostrar el bloqueo (si no, login). */
+export const SESSION_LOCK_MIN_REMAINING_MS = 2 * 60 * 1000;
+
 /** Mínimo entre escrituras de lastActivity ante eventos de alta frecuencia. */
 export const IDLE_ACTIVITY_THROTTLE_MS = 1000;
 
