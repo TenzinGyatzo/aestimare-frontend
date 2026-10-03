@@ -68,33 +68,41 @@
               {{ cotizacion.folio }}
             </span>
           </div>
-          <div class="flex justify-between items-center">
-            <span class="text-gray-500 text-sm font-medium">Subtotal</span>
-            <div class="text-right">
-              <span class="text-gray-900 font-semibold">
-                {{ formatMoney(cotizacion.total) }}
-              </span>
-              <p
-                class="text-[10px] text-gray-400 uppercase tracking-wider font-bold"
-              >
-                *Sin IVA
-              </p>
+          <template v-if="agregarIva">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-500 text-sm font-medium">Subtotal</span>
+              <div class="text-right">
+                <span class="text-gray-900 font-semibold">
+                  {{ formatMoney(cotizacion.total) }}
+                </span>
+                <p
+                  class="text-[10px] text-gray-400 uppercase tracking-wider font-bold"
+                >
+                  *Sin IVA
+                </p>
+              </div>
             </div>
-          </div>
-          <div
-            class="flex justify-between items-center pt-2 border-t border-gray-200"
-          >
-            <span class="text-gray-900 font-bold">Total Final</span>
-            <div class="text-right">
-              <span class="text-medical-blue-700 text-lg font-extrabold">
-                {{ formatMoney(cotizacion.total * 1.16) }}
-              </span>
-              <p
-                class="text-[10px] text-medical-blue-400 uppercase tracking-wider font-bold"
-              >
-                *IVA Incluido
-              </p>
+            <div
+              class="flex justify-between items-center pt-2 border-t border-gray-200"
+            >
+              <span class="text-gray-900 font-bold">Total Final</span>
+              <div class="text-right">
+                <span class="text-medical-blue-700 text-lg font-extrabold">
+                  {{ formatMoney(cotizacion.total * 1.16) }}
+                </span>
+                <p
+                  class="text-[10px] text-medical-blue-400 uppercase tracking-wider font-bold"
+                >
+                  *IVA Incluido
+                </p>
+              </div>
             </div>
+          </template>
+          <div v-else class="flex justify-between items-center">
+            <span class="text-gray-900 font-bold">Total</span>
+            <span class="text-medical-blue-700 text-lg font-extrabold">
+              {{ formatMoney(cotizacion.total) }}
+            </span>
           </div>
           <div class="flex justify-between items-center pt-2 text-xs">
             <span class="text-gray-400 font-medium italic">Válida hasta</span>
@@ -403,6 +411,8 @@ interface CotizacionModalData {
   total: number;
   fechaVencimiento?: Date | string;
   sinVigencia?: boolean;
+  /** Ausente o true = desglose IVA. Solo false muestra un solo Total. */
+  agregarIva?: boolean;
 }
 
 interface Props {
@@ -458,6 +468,8 @@ const ccHint = computed(() =>
     ? 'Escribe para sugerir correos de notificación configurados.'
     : '',
 );
+
+const agregarIva = computed(() => props.cotizacion?.agregarIva !== false);
 
 const emailErrorHint = computed(() => {
   const msg = (props.emailError || '').toLowerCase();

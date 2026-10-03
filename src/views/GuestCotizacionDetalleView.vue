@@ -374,25 +374,31 @@
               Resumen de Pago
             </h2>
             <div class="space-y-4">
-              <div class="flex justify-between items-center py-2">
+              <div
+                v-if="agregarIva"
+                class="flex justify-between items-center py-2"
+              >
                 <span class="text-gray-500 font-medium">Subtotal</span>
                 <span class="text-gray-900 font-bold">{{
                   formatCurrency(cotizacion.total)
                 }}</span>
               </div>
-              <div class="flex justify-between items-center py-2">
+              <div
+                v-if="agregarIva"
+                class="flex justify-between items-center py-2"
+              >
                 <span class="text-gray-500 font-medium">I.V.A (16%)</span>
                 <span class="text-gray-900 font-bold">{{
                   formatCurrency(iva)
                 }}</span>
               </div>
-              <div class="pt-4 border-t-2 border-gray-50">
+              <div :class="agregarIva ? 'pt-4 border-t-2 border-gray-50' : ''">
                 <div class="flex justify-between items-center">
                   <span class="text-medical-blue-600 font-black text-lg"
                     >TOTAL</span
                   >
                   <span class="text-medical-blue-700 font-black text-2xl">{{
-                    formatCurrency(grandTotal)
+                    formatCurrency(agregarIva ? grandTotal : cotizacion.total)
                   }}</span>
                 </div>
               </div>
@@ -548,6 +554,8 @@ onMounted(() => {
   }
 });
 
+/** Ausente o true = desglose 16 %. Solo false deja un solo TOTAL. */
+const agregarIva = computed(() => cotizacion.value?.agregarIva !== false);
 const iva = computed(() => (cotizacion.value?.total || 0) * 0.16);
 const grandTotal = computed(() => (cotizacion.value?.total || 0) + iva.value);
 
@@ -623,6 +631,7 @@ function toPdfShape(c: PublicCotizacionResponse): CotizacionDetalleDto {
     incluirDescripciones: c.incluirDescripciones === true,
     incluirImagenesPdf: c.incluirImagenesPdf === true,
     incluirDatosBancarios: c.incluirDatosBancarios === true,
+    agregarIva: c.agregarIva !== false,
     plantillasSnapshot: c.plantillasSnapshot,
     items: (c.items || []).map((it) => {
       const tipoSnapshot =

@@ -367,7 +367,9 @@
       v-if="serviciosSeleccionados.length > 0"
       class="px-4 lg:px-6 py-4 border-t border-gray-100 bg-gray-50/60 flex items-center justify-between gap-4"
     >
-      <span class="text-sm font-bold text-gray-600">Total (sin IVA)</span>
+      <span class="text-sm font-bold text-gray-600">{{
+        agregarIva ? 'Total (sin IVA)' : 'Total'
+      }}</span>
       <span class="text-lg font-bold text-gray-900">{{
         formatMoney(totalSinIva)
       }}</span>
@@ -402,6 +404,8 @@ interface Props {
   mostrarDescripciones?: boolean;
   /** Availability: hay algún concepto con descripción no vacía. */
   descripcionesDisponibles?: boolean;
+  /** false = pie de una sola fila Total (suma de líneas), sin mención de IVA. */
+  agregarIva?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -412,6 +416,7 @@ const props = withDefaults(defineProps<Props>(), {
   ayudaVacia: 'Haz clic en el botón verde para comenzar a añadir items.',
   mostrarDescripciones: true,
   descripcionesDisponibles: true,
+  agregarIva: true,
 });
 
 const emit = defineEmits<{

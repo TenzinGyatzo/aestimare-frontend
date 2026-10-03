@@ -148,16 +148,24 @@
             </table>
           </div>
           <div class="mt-4 pt-3 border-t border-gray-200 space-y-1 text-sm">
-            <div class="flex justify-between">
-              <span class="text-gray-500">Subtotal (sin IVA)</span>
-              <span class="font-semibold text-gray-900">{{
-                formatMoney(totalSinIva)
-              }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-900 font-bold">Total con IVA</span>
+            <template v-if="agregarIva">
+              <div class="flex justify-between">
+                <span class="text-gray-500">Subtotal (sin IVA)</span>
+                <span class="font-semibold text-gray-900">{{
+                  formatMoney(totalSinIva)
+                }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-900 font-bold">Total con IVA</span>
+                <span class="font-extrabold text-medical-blue-700">{{
+                  formatMoney(totalConIva)
+                }}</span>
+              </div>
+            </template>
+            <div v-else class="flex justify-between">
+              <span class="text-gray-900 font-bold">Total</span>
               <span class="font-extrabold text-medical-blue-700">{{
-                formatMoney(totalConIva)
+                formatMoney(totalSinIva)
               }}</span>
             </div>
           </div>
@@ -321,6 +329,8 @@ interface Props {
   items: RevisionItem[];
   totalSinIva: number;
   totalConIva: number;
+  /** false = una sola fila Total igual a la suma de líneas. */
+  agregarIva?: boolean;
   mostrarDescripciones: boolean;
   incluirDatosBancarios: boolean;
   incluirImagenesPdf: boolean;
@@ -337,6 +347,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   razonSocial: '',
+  agregarIva: true,
   isPdfBusy: false,
   isConfirming: false,
 });

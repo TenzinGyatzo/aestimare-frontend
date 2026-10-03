@@ -213,6 +213,7 @@ export const getCotizacionDefinition = (
     };
   };
 
+  const agregarIva = detalle.agregarIva !== false;
   const iva = detalle.total * 0.16;
   const total = detalle.total + iva;
   const cliente = getCliente();
@@ -384,32 +385,55 @@ export const getCotizacionDefinition = (
           width: 200,
           table: {
             widths: ['*', 'auto'],
-            body: [
-              [
-                { text: 'Subtotal:', alignment: 'right', style: 'totalLabel' },
-                {
-                  text: formatCurrency(detalle.total),
-                  alignment: 'right',
-                  style: 'totalValue',
-                },
-              ],
-              [
-                { text: 'IVA:', alignment: 'right', style: 'totalLabel' },
-                {
-                  text: formatCurrency(iva),
-                  alignment: 'right',
-                  style: 'totalValue',
-                },
-              ],
-              [
-                { text: 'TOTAL:', alignment: 'right', style: 'totalLabelBold' },
-                {
-                  text: formatCurrency(total),
-                  alignment: 'right',
-                  style: 'totalValueBold',
-                },
-              ],
-            ],
+            body: agregarIva
+              ? [
+                  [
+                    {
+                      text: 'Subtotal:',
+                      alignment: 'right',
+                      style: 'totalLabel',
+                    },
+                    {
+                      text: formatCurrency(detalle.total),
+                      alignment: 'right',
+                      style: 'totalValue',
+                    },
+                  ],
+                  [
+                    { text: 'IVA:', alignment: 'right', style: 'totalLabel' },
+                    {
+                      text: formatCurrency(iva),
+                      alignment: 'right',
+                      style: 'totalValue',
+                    },
+                  ],
+                  [
+                    {
+                      text: 'TOTAL:',
+                      alignment: 'right',
+                      style: 'totalLabelBold',
+                    },
+                    {
+                      text: formatCurrency(total),
+                      alignment: 'right',
+                      style: 'totalValueBold',
+                    },
+                  ],
+                ]
+              : [
+                  [
+                    {
+                      text: 'TOTAL:',
+                      alignment: 'right',
+                      style: 'totalLabelBold',
+                    },
+                    {
+                      text: formatCurrency(detalle.total),
+                      alignment: 'right',
+                      style: 'totalValueBold',
+                    },
+                  ],
+                ],
           },
           layout: 'noBorders',
         },

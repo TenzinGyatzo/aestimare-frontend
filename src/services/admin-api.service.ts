@@ -320,6 +320,8 @@ export interface CreateAdminCotizacionPayload {
   incluirDescripciones?: boolean;
   /** Story 8.2 / AD-26 — omitido en BE → default por catálogo. */
   incluirImagenesPdf?: boolean;
+  /** Desglose IVA 16 %. Omitido en BE → true. */
+  agregarIva?: boolean;
   /** Plantillas ordenadas (Story 6.5). Omitido/vacío = ninguna. */
   plantillas?: Array<{
     plantillaId: string;
@@ -453,6 +455,8 @@ export type RepetirCotizacionPreviewDto = {
   incluirDescripciones: boolean;
   /** Story 8.2 / AD-26 */
   incluirImagenesPdf: boolean;
+  /** Desglose IVA 16 %. Fuente sin campo → true. */
+  agregarIva: boolean;
   plantillas: Array<{
     plantillaId: string;
     nombre?: string;

@@ -552,7 +552,7 @@
               </tr>
             </tbody>
             <tfoot class="bg-gray-50">
-              <tr class="border-t border-gray-200">
+              <tr v-if="agregarIva" class="border-t border-gray-200">
                 <td
                   colspan="3"
                   class="px-3 py-2 text-right font-semibold text-gray-900"
@@ -563,7 +563,7 @@
                   {{ formatMoney(cotizacionDetalle.total) }}
                 </td>
               </tr>
-              <tr class="border-t border-gray-200">
+              <tr v-if="agregarIva" class="border-t border-gray-200">
                 <td
                   colspan="3"
                   class="px-3 py-2 text-right font-semibold text-gray-900 text-sm"
@@ -586,7 +586,11 @@
                 <td
                   class="px-3 py-2 text-right font-bold text-lg text-gray-900"
                 >
-                  {{ formatMoney(totalConIva) }}
+                  {{
+                    formatMoney(
+                      agregarIva ? totalConIva : cotizacionDetalle.total,
+                    )
+                  }}
                 </td>
               </tr>
             </tfoot>
@@ -1089,6 +1093,11 @@ async function refreshEmailCredentialsFlag(): Promise<void> {
     emailCredentialsConfigured.value = null;
   }
 }
+
+/** Ausente o true = desglose 16 %. Solo false deja un solo Total. */
+const agregarIva = computed(
+  () => cotizacionDetalle.value?.agregarIva !== false,
+);
 
 // Computed para calcular el IVA (16% del subtotal)
 const iva = computed(() => {

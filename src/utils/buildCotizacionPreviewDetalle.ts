@@ -24,6 +24,7 @@ export type BuildPreviewDetalleInput = {
   incluirDatosBancarios: boolean;
   incluirDescripciones: boolean;
   incluirImagenesPdf: boolean;
+  agregarIva: boolean;
   plantillasSeleccionadasIds: string[];
   plantillaSnapshots: Record<
     string,
@@ -114,6 +115,7 @@ export function buildCotizacionPreviewDetalle(
     incluirDatosBancarios: input.incluirDatosBancarios,
     incluirDescripciones: input.incluirDescripciones,
     incluirImagenesPdf: input.incluirImagenesPdf,
+    agregarIva: input.agregarIva,
   };
 
   if (!input.sinVigencia && input.fechaVencimientoIso) {

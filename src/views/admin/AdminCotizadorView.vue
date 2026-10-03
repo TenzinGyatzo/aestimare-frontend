@@ -344,6 +344,7 @@
         :is-loading="isLoadingServicios"
         :mostrar-descripciones="mostrarDescripciones"
         :descripciones-disponibles="descripcionesDisponibles"
+        :agregar-iva="agregarIva"
         @update:mostrar-descripciones="setMostrarDescripciones($event)"
         @abrir-modal="abrirModal"
         @actualizar-cantidad="actualizarCantidad"
@@ -781,6 +782,43 @@
               </div>
             </div>
           </div>
+
+          <div
+            class="p-4 rounded-2xl border bg-medical-blue-50/50 border-medical-blue-100 cursor-pointer"
+            role="group"
+            @click="setAgregarIva(!agregarIva)"
+          >
+            <div class="flex items-start group">
+              <div class="relative shrink-0">
+                <input
+                  id="opt-agregar-iva"
+                  type="checkbox"
+                  class="sr-only peer"
+                  :checked="agregarIva"
+                  @click.stop
+                  @change="
+                    setAgregarIva(($event.target as HTMLInputElement).checked)
+                  "
+                />
+                <div
+                  class="w-11 h-6 rounded-full peer peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-medical-blue-400 peer-focus-visible:ring-offset-1 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:transition-all"
+                  :class="agregarIva ? 'bg-medical-blue-600' : 'bg-gray-200'"
+                ></div>
+              </div>
+              <div class="ml-4 min-w-0">
+                <label
+                  for="opt-agregar-iva"
+                  class="block text-sm font-bold text-gray-800 group-hover:text-medical-blue-700 cursor-pointer"
+                  @click.stop
+                >
+                  Agregar IVA
+                </label>
+                <p class="text-xs mt-0.5 text-medical-blue-600/70">
+                  Desglosa el IVA al 16 % en la cotización y el PDF.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Días de vigencia (fuera de tarjetas; atenuado si vigencia OFF) -->
@@ -940,6 +978,7 @@
       :items="revisionItems"
       :total-sin-iva="revisionTotalSinIva"
       :total-con-iva="revisionTotalConIva"
+      :agregar-iva="agregarIva"
       :mostrar-descripciones="effectiveIncluirDescripciones"
       :incluir-datos-bancarios="effectiveIncluirDatosBancarios"
       :incluir-imagenes-pdf="effectiveIncluirImagenesPdf"
@@ -1274,6 +1313,8 @@ const isResendingEmail = ref(false);
 /** Bases (selected/preferidas). No pisar con availability. */
 const incluirDatosBancarios = ref(true);
 const mostrarDescripciones = ref(true);
+/** Desglose IVA 16 %. Inicia encendido; no sigue un default de tenant. */
+const agregarIva = ref(true);
 /** Story 6.5 — bancarios útiles en tenant config (availability). */
 const bancariosUtiles = ref(false);
 /** Defaults tenant para init/reset (saved ?? tenant ?? true). */
@@ -1901,6 +1942,7 @@ onMounted(async () => {
       incluirDatosBancarios,
       mostrarDescripciones,
       incluirImagenesPdf,
+      agregarIva,
       tenantDefaultIncluirDatosBancarios,
       tenantDefaultIncluirDescripciones,
       tenantDefaultIncluirImagenesPdf,
@@ -2053,6 +2095,10 @@ function setIncluirImagenesPdf(value: boolean) {
   if (!imagenesDisponibles.value) return;
   visualizacionBasesTouched = true;
   incluirImagenesPdf.value = value;
+}
+
+function setAgregarIva(value: boolean) {
+  agregarIva.value = value;
 }
 
 function setUsarVigencia(value: boolean) {
@@ -2466,6 +2512,7 @@ function buildCreatePayload(): PendingCreate {
     incluirDatosBancarios: incluirDatosBancarios.value,
     incluirDescripciones: mostrarDescripciones.value,
     incluirImagenesPdf: incluirImagenesPdf.value,
+    agregarIva: agregarIva.value,
     emailsPara: para,
     emailsCc: cc,
   };
@@ -2521,6 +2568,7 @@ function buildPreviewDetalleInput() {
     incluirDatosBancarios: effectiveIncluirDatosBancarios.value,
     incluirDescripciones: effectiveIncluirDescripciones.value,
     incluirImagenesPdf: effectiveIncluirImagenesPdf.value,
+    agregarIva: agregarIva.value,
     plantillasSeleccionadasIds: plantillasSeleccionadasIds.value,
     plantillaSnapshots: plantillaSnapshots.value,
   };
@@ -2835,6 +2883,7 @@ const cerrarModal = () => {
   incluirDatosBancarios.value = tenantDefaultIncluirDatosBancarios;
   mostrarDescripciones.value = tenantDefaultIncluirDescripciones;
   incluirImagenesPdf.value = tenantDefaultIncluirImagenesPdf;
+  agregarIva.value = true;
   plantillasSeleccionadasIds.value = [];
   plantillaSnapshots.value = {};
   showPersonalizarModal.value = false;

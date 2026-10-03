@@ -261,6 +261,8 @@ export interface PublicCotizacionResponse {
   incluirDescripciones?: boolean;
   incluirImagenesPdf?: boolean;
   incluirDatosBancarios?: boolean;
+  /** Ausente o true = desglose IVA 16 %. Solo false lo apaga. */
+  agregarIva?: boolean;
   plantillasSnapshot?: Array<{
     plantillaId: string;
     nombreSnapshot: string;
@@ -491,6 +493,8 @@ export interface CotizacionDetalleDto {
   incluirDescripciones?: boolean;
   /** Story 8.2 / AD-26 — PDF puede incluir imágenes de producto (render en 8.3). */
   incluirImagenesPdf?: boolean;
+  /** Ausente o true = desglose IVA 16 %. Solo false lo apaga. */
+  agregarIva?: boolean;
   /** Destinatarios Para (Story 6.6). */
   emailsPara?: string[];
   /** Destinatarios CC (Story 6.6). */

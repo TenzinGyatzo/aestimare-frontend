@@ -34,6 +34,7 @@ export type CotizadorHydrateContext = {
   incluirDatosBancarios: Ref<boolean>;
   mostrarDescripciones: Ref<boolean>;
   incluirImagenesPdf: Ref<boolean>;
+  agregarIva: Ref<boolean>;
   /** Fallback cuando el draft no trae el flag (cotización antigua). */
   tenantDefaultIncluirDatosBancarios?: boolean;
   tenantDefaultIncluirDescripciones?: boolean;
@@ -105,6 +106,8 @@ export async function hydrateCotizadorFromDraft(
     draft.incluirImagenesPdf,
     ctx.tenantDefaultIncluirImagenesPdf,
   );
+  // Fuente sin campo → encendido. No usa default de tenant.
+  ctx.agregarIva.value = draft.agregarIva !== false;
 
   ctx.plantillasSeleccionadasIds.value = (draft.plantillas || []).map(
     (p) => p.plantillaId,
